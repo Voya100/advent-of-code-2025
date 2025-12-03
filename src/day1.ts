@@ -17,6 +17,8 @@ export function part2(input: string) {
   const directions = parseInput(input);
   let dial = 50;
   let password = 0;
+  // Note: Not optimised for large values.
+  // Input values are small, so using simple algorithm
   for (const direction of directions) {
     const sign = direction < 0 ? -1 : 1;
     for (let i = 0; i < Math.abs(direction); i++) {
