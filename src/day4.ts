@@ -1,6 +1,6 @@
 // https://adventofcode.com/2025/day/4
 
-import { Coordinate, getAdjacentCoordinates, getAdjacentNonDiagonalCoordinates, getRange } from './utils.ts';
+import { Coordinate, getAdjacentCoordinates, getRange } from './utils.ts';
 
 const ROLL = '@';
 const EMPTY = '.';
