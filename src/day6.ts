@@ -14,62 +14,39 @@ export function part1(input: string) {
 
 export function part2(input: string) {
   const problems = parseInput2(input);
-  console.log(problems);
   return sum(problems, solveProblem);
 }
 
 function parseInput(input: string): Problem[] {
   const rows = input.split('\n');
-  const operationInput = rows.pop()!;
-  const numberRows = rows.map(parseNumbers);
-  const operators = [...operationInput.matchAll(/[*+]/g)].map((v) => v[0] as '+' | '*');
-  const problems = operators.map((operator, i) => {
-    const numbers: number[] = [];
-    for (const row of numberRows) {
-      numbers.push(row[i]);
-    }
-    return { operator, numbers };
+  // Swap columns to rows
+  const valueRows = transpose(rows.map((row) => [...row.matchAll(/\S+/g)].flat()));
+  return valueRows.map((row) => {
+    // Example row: ['123', '45', '6', '*']
+    return {
+      numbers: row.slice(0, -1).map((v) => +v),
+      operator: row.at(-1) as '+' | '*',
+    };
   });
-  return problems;
 }
 
 function parseInput2(input: string): Problem[] {
-  const rows = input.split('\n');
-  const operationInput = rows.pop()!;
-  const problems: Problem[] = [];
-  // Indices between which current operation's values are
-  // Note: Assuming that operator symbol is at index '0' compared to its numbers,
-  // and that there is exactly 1 empty column between problems
-  // E.g.
-  // 123 12 2
-  // 23   1 23
-  // +   *  +
-  let i1 = 0;
-  let i2 = 1 + operationInput.slice(1).search(/[+*]/);
-  while (i2 !== -1 && i1 !== i2) {
-    const numbers: number[] = [];
-    for (let j = i2 - 2; j >= i1; j--) {
-      let numberStr = '';
-      for (const row of rows) {
-        if (row[j] !== undefined) {
-          numberStr += row[j];
-        }
-      }
-      numbers.push(+numberStr);
-    }
-    problems.push({
-      operator: operationInput[i1] as '+' | '*',
+  const transposedInputArray = transpose(input.split('\n').map((row) => row.split('')));
+  // Trim so that empty separator row is fully empty
+  const transposedInput = transposedInputArray.map((row) => row.join('').trim()).join('\n');
+  const problemInputs = transposedInput.split('\n\n');
+  return problemInputs.map((problemInput) => {
+    // Example input format as transposed:
+    //  32*
+    // 581
+    // 175
+    const numbers = parseNumbers(problemInput);
+    const operator = problemInput.includes('+') ? '+' : '*';
+    return {
       numbers,
-    });
-    i1 = i2;
-    const nextOperationIndex = operationInput.slice(i2 + 1).search(/[+*]/);
-    if (nextOperationIndex === -1) {
-      i2 = operationInput.length + 1;
-    } else {
-      i2 = i2 + 1 + operationInput.slice(i2 + 1).search(/[+*]/);
-    }
-  }
-  return problems;
+      operator,
+    };
+  });
 }
 
 function solveProblem(problem: Problem) {
@@ -80,4 +57,8 @@ function solveProblem(problem: Problem) {
     return multiply(problem.numbers, (v) => v);
   }
   throw new Error(`Unknown operator: ${problem.operator}`);
+}
+
+function transpose<T>(array: T[][]) {
+  return array[0].map((_row, x) => array.map((_value, y) => array[y][x]));
 }
