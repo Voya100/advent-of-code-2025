@@ -157,28 +157,58 @@ export function findAllPathsWithDfs<NodeType extends DfsNode<NodeType, Options>,
   return paths;
 }
 
-/*export function findAllPathsWithDfs<NodeType extends DfsNode<NodeType, Options>, Options>(
-  path: NodeType[],
+/**
+ * Conts all paths to target starting from start.
+ * Note: Not tested with graphs that contain cycles.
+ * Stops each path at target (cannot be multiple times on "same" path)
+ */
+export function countAllPathsWithDfs<NodeType extends DfsNode<NodeType, Options>, Options>(
+  start: NodeType,
   isTargetNode: (node: NodeType) => boolean,
   options: Options,
-  paths: NodeType[][] = []
 ) {
-  const currentNode = path[path.length - 1];
+  const path = [start];
+  const pathSet = new Set([start]);
+  const nextNodes: [NodeType, NodeType][] = start.getAdjacentNodes(options).map((node) => [start, node]);
+  const cache = new Map<NodeType, number>();
 
-  if (isTargetNode(currentNode)) {
-    paths.push([...path]);
-    return paths;
-  }
-
-  for (const node of currentNode.getAdjacentNodes(options)) {
-    if (!path.includes(node)) {
-      path.push(node);
+  while (nextNodes.length) {
+    const [previousNode, currentNode] = nextNodes.pop()!;
+    // Move path "back" until last element is previousNode
+    while (path[path.length - 1] !== previousNode) {
+      const removedNode = path.pop()!;
+      const beforeRemoved = path.at(-1)!;
+      // As we move back, update cache value to include count from fully explored child paths
+      // Note: beforeRemoved could still get more values from other child paths
+      // removedNode's paths however are fully explored (= should already be cached with final value)
+      cache.set(beforeRemoved, (cache.get(beforeRemoved) ?? 0) + (cache.get(removedNode) ?? 0));
+      pathSet.delete(removedNode);
     }
-    findAllPathsWithDfs(path, isTargetNode, options, paths);
-    path.pop();
+    path.push(currentNode);
+    pathSet.add(currentNode);
+    if (isTargetNode(currentNode)) {
+      cache.set(currentNode, 1);
+      continue;
+    }
+
+    for (const node of currentNode.getAdjacentNodes(options)) {
+      if (!pathSet.has(node)) {
+        if (cache.has(node)) {
+          cache.set(currentNode, (cache.get(currentNode) ?? 0) + (cache.get(node) ?? 0));
+        } else {
+          nextNodes.push([currentNode, node]);
+        }
+      }
+    }
   }
-  return paths;
-}*/
+  while (path.length > 1) {
+    const removedNode = path.pop()!;
+    const beforeRemoved = path.at(-1)!;
+    cache.set(beforeRemoved, (cache.get(beforeRemoved) ?? 0) + (cache.get(removedNode) ?? 0));
+    pathSet.delete(removedNode);
+  }
+  return cache.get(start) ?? 0;
+}
 
 /**
  * Generic node type for depth-first search (DFS)
