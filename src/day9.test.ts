@@ -19,6 +19,6 @@ describe('day 9, part 1', () => {
 
 describe('day 9, part 2', () => {
   it('should work with test input', () => {
-    expect(part2(input)).toBe(null);
+    expect(part2(input)).toBe(24);
   });
 });
